@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interpolation Search - DAA Experiment</title>
+
+<style>
+    body{
+        font-family: Arial, sans-serif;
+        background:#f4f4f4;
+        margin:0;
+        padding:30px;
+    }
+
+    .container{
+        max-width:900px;
+        margin:auto;
+        background:white;
+        padding:25px;
+        border-radius:10px;
+        box-shadow:0 0 10px rgba(0,0,0,0.2);
+    }
+
+    h1{
+        text-align:center;
+        color:#2c3e50;
+    }
+
+    label{
+        font-weight:bold;
+    }
+
+    input{
+        width:100%;
+        padding:10px;
+        margin-top:5px;
+        margin-bottom:15px;
+        font-size:16px;
+    }
+
+    button{
+        padding:12px 20px;
+        background:#3498db;
+        color:white;
+        border:none;
+        cursor:pointer;
+        border-radius:5px;
+        font-size:16px;
+    }
+
+    button:hover{
+        background:#2980b9;
+    }
+
+    #result{
+        margin-top:20px;
+        padding:15px;
+        background:#ecf0f1;
+        border-radius:8px;
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+        margin-top:20px;
+    }
+
+    th,td{
+        border:1px solid #ddd;
+        padding:10px;
+        text-align:center;
+    }
+
+    th{
+        background:#3498db;
+        color:white;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>Interpolation Search</h1>
+
+<label>Enter Sorted Array</label>
+<input type="text" id="arrayInput" placeholder="10 20 30 40 50 60">
+
+<label>Target Element</label>
+<input type="number" id="targetInput">
+
+<button onclick="runSearch()">Search</button>
+
+<div id="result"></div>
+
+<h2>Performance Analysis</h2>
+
+<button onclick="performanceAnalysis()">Run Performance Test</button>
+
+<table id="performanceTable">
+<thead>
+<tr>
+<th>Size</th>
+<th>IS Time (ms)</th>
+<th>BS Time (ms)</th>
+<th>IS Comparisons</th>
+<th>BS Comparisons</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+function interpolationSearch(arr,target){
+
+    let low=0;
+    let high=arr.length-1;
+    let comparisons=0;
+
+    while(low<=high && target>=arr[low] && target<=arr[high]){
+
+        comparisons++;
+
+        if(low===high){
+            if(arr[low]===target)
+                return {index:low,comparisons};
+            return {index:-1,comparisons};
+        }
+
+        if(arr[high]===arr[low])
+            break;
+
+        let pos=low+Math.floor(
+            ((target-arr[low])*(high-low))/(arr[high]-arr[low])
+        );
+
+        if(arr[pos]===target)
+            return {index:pos,comparisons};
+
+        if(arr[pos]<target)
+            low=pos+1;
+        else
+            high=pos-1;
+    }
+
+    return {index:-1,comparisons};
+}
+
+function binarySearch(arr,target){
+
+    let low=0;
+    let high=arr.length-1;
+    let comparisons=0;
+
+    while(low<=high){
+
+        comparisons++;
+
+        let mid=Math.floor((low+high)/2);
+
+        if(arr[mid]===target)
+            return {index:mid,comparisons};
+
+        if(arr[mid]<target)
+            low=mid+1;
+        else
+            high=mid-1;
+    }
+
+    return {index:-1,comparisons};
+
+}
+
+function runSearch(){
+
+    let arr=document.getElementById("arrayInput")
+    .value
+    .trim()
+    .split(/\s+/)
+    .map(Number);
+
+    let target=parseInt(document.getElementById("targetInput").value);
+
+    let result=interpolationSearch(arr,target);
+
+    let html="";
+
+    html+="<h3>Result</h3>";
+    html+="<p><b>Array:</b> "+arr.join(", ")+"</p>";
+    html+="<p><b>Searching:</b> "+target+"</p>";
+
+    if(result.index!=-1)
+        html+="<p style='color:green'><b>Element Found at Index "+result.index+"</b></p>";
+    else
+        html+="<p style='color:red'><b>Element Not Found</b></p>";
+
+    html+="<p><b>Comparisons:</b> "+result.comparisons+"</p>";
+
+    document.getElementById("result").innerHTML=html;
+}
+
+function performanceAnalysis(){
+
+    let sizes=[1000,5000,10000,50000,100000];
+
+    let tbody=document.querySelector("#performanceTable tbody");
+
+    tbody.innerHTML="";
+
+    sizes.forEach(size=>{
+
+        let arr=[];
+
+        for(let i=0;i<size;i++){
+            arr.push(i*10);
+        }
+
+        let target=arr[Math.floor(Math.random()*size)];
+
+        let start=performance.now();
+
+        let isResult;
+
+        for(let i=0;i<100;i++)
+            isResult=interpolationSearch(arr,target);
+
+        let isTime=(performance.now()-start)/100;
+
+        start=performance.now();
+
+        let bsResult;
+
+        for(let i=0;i<100;i++)
+            bsResult=binarySearch(arr,target);
+
+        let bsTime=(performance.now()-start)/100;
+
+        tbody.innerHTML+=`
+        <tr>
+        <td>${size}</td>
+        <td>${isTime.toFixed(4)}</td>
+        <td>${bsTime.toFixed(4)}</td>
+        <td>${isResult.comparisons}</td>
+        <td>${bsResult.comparisons}</td>
+        </tr>
+        `;
+    });
+
+}
+
+</script>
+
+</body>
+</html>
