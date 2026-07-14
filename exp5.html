@@ -1,0 +1,1157 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Min-Max Divide &amp; Conquer Lab Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Beautiful Retro-Industrial Tech Monospace and Sans Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=JetBrains+Mono:wght@300;400;600;800&family=Share+Tech+Mono&family=Sora:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --bg-panel: #11141a;
+      --bg-panel-header: #171b24;
+      --border-color: #262e3d;
+      --border-color-active: #405270;
+      
+      --accent-cyan: #00f0ff;
+      --accent-cyan-dim: rgba(0, 240, 255, 0.15);
+      --accent-cyan-glow: rgba(0, 240, 255, 0.4);
+      
+      --accent-orange: #ff7b00;
+      --accent-orange-dim: rgba(255, 123, 0, 0.15);
+      
+      --accent-green: #39e58e;
+      --accent-green-dim: rgba(57, 229, 142, 0.1);
+      
+      --text-main: #e2e8f0;
+      --text-muted: #718096;
+      --text-glow: #00f0ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Sora', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Grid Overlay Background Texture */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(16, 20, 28, 0.6) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 20, 28, 0.6) 1px, transparent 1px);
+      background-size: 20px 20px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Scanline effects for retro-tech style */
+    body::after {
+      content: " ";
+      display: block;
+      position: fixed;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 99999;
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 2px solid var(--border-color);
+      padding: 1.5rem 2rem;
+      position: relative;
+    }
+
+    .header-glow {
+      position: absolute;
+      bottom: -2px;
+      left: 10%;
+      width: 80%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-orange), transparent);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-tag {
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--accent-orange);
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h1 span {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 10px var(--accent-cyan-glow);
+    }
+
+    .meta-badge {
+      font-family: 'Share Tech Mono', monospace;
+      background: rgba(38, 46, 61, 0.5);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .meta-badge strong {
+      color: var(--accent-cyan);
+    }
+
+    main {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .panel-header {
+      background-color: var(--bg-panel-header);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .panel-title::before {
+      content: "///";
+      color: var(--accent-orange);
+      font-weight: bold;
+    }
+
+    .panel-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    /* Forms & Controls */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background-color: rgba(10, 12, 16, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 0.8rem 1rem;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan-glow);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.8rem 1.5rem;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-cyan-dim);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-cyan);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px var(--accent-cyan-glow);
+    }
+
+    .btn-secondary {
+      background-color: rgba(38, 46, 61, 0.4);
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-color-active);
+      background-color: rgba(38, 46, 61, 0.8);
+    }
+
+    /* Custom Array Presets Grid */
+    .presets-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.8rem;
+    }
+
+    .preset-card {
+      background-color: rgba(10, 12, 16, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 0.6rem;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .preset-card:hover {
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+      background-color: rgba(255, 123, 0, 0.05);
+    }
+
+    /* Algorithm Execution Visualizer Area */
+    .output-card {
+      background-color: rgba(10, 12, 16, 0.75);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.2rem;
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+    }
+
+    .badge-label {
+      position: absolute;
+      top: -10px;
+      left: 15px;
+      background-color: var(--bg-panel-header);
+      padding: 0 8px;
+      font-size: 0.75rem;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--accent-cyan);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+    }
+
+    .array-render {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .array-elem {
+      background-color: var(--bg-panel-header);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+      min-width: 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .array-elem.min {
+      border-color: var(--accent-green);
+      background-color: rgba(57, 229, 142, 0.08);
+      color: var(--accent-green);
+      font-weight: bold;
+    }
+
+    .array-elem.max {
+      border-color: var(--accent-orange);
+      background-color: rgba(255, 123, 0, 0.08);
+      color: var(--accent-orange);
+      font-weight: bold;
+    }
+
+    /* Execution Log & Step-by-Step Execution Visualizer */
+    .log-container {
+      background-color: #07090d;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+      height: 250px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .log-entry {
+      color: var(--text-muted);
+      border-left: 2px solid transparent;
+      padding-left: 0.5rem;
+    }
+
+    .log-entry.step {
+      color: var(--text-main);
+      border-left-color: var(--accent-cyan);
+    }
+
+    .log-entry.compare {
+      color: var(--accent-orange);
+      background-color: rgba(255, 123, 0, 0.02);
+      border-left-color: var(--accent-orange);
+    }
+
+    .log-entry.success {
+      color: var(--accent-green);
+      border-left-color: var(--accent-green);
+    }
+
+    /* Grid layout for comparison statistics */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .stat-box {
+      background: rgba(10, 12, 16, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .stat-box.cyan .stat-value {
+      color: var(--accent-cyan);
+    }
+
+    .stat-box.orange .stat-value {
+      color: var(--accent-orange);
+    }
+
+    /* Performance Comparison Matrix Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background-color: var(--bg-panel-header);
+      color: var(--accent-cyan);
+      font-family: 'Share Tech Mono', monospace;
+      text-transform: uppercase;
+      font-weight: normal;
+      font-size: 0.9rem;
+      border-bottom: 2px solid var(--border-color);
+      text-align: right;
+      padding: 0.8rem 1rem;
+    }
+
+    th:first-child {
+      text-align: left;
+    }
+
+    td {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: right;
+    }
+
+    td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    tr:hover td {
+      background-color: rgba(38, 46, 61, 0.2);
+    }
+
+    /* Interactive Tree Visualizer */
+    .tree-visualization-wrapper {
+      background-color: #07090d;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+      height: 380px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .tree-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 10px;
+    }
+
+    /* Footer styling */
+    footer {
+      background-color: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      padding: 1.5rem;
+      text-align: center;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: auto;
+    }
+
+    footer a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Tab Layout for Right Side Panel */
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-panel-header);
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem;
+      padding: 1rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-cyan);
+      border-bottom-color: var(--accent-cyan);
+      background-color: rgba(0, 240, 255, 0.02);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 1.5rem;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* Code Block Display Styling */
+    pre {
+      background-color: #07090d;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #9cdcfe;
+    }
+
+    .keyword { color: #569cd6; }
+    .def { color: #dcdcaa; }
+    .comment { color: #6a9955; }
+    .number { color: #b5cea8; }
+    .string { color: #ce9178; }
+
+    /* Animated D&C tree canvas style visualizer */
+    .tree-container-svg {
+      width: 100%;
+      height: 100%;
+      min-height: 340px;
+    }
+
+    .svg-node-circle {
+      fill: var(--bg-panel);
+      stroke: var(--border-color);
+      stroke-width: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .svg-node-circle.active {
+      stroke: var(--accent-cyan);
+      fill: rgba(0, 240, 255, 0.1);
+    }
+
+    .svg-node-circle.computed {
+      stroke: var(--accent-green);
+      fill: rgba(57, 229, 142, 0.1);
+    }
+
+    .svg-text {
+      fill: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .svg-text-label {
+      fill: var(--text-muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      text-anchor: middle;
+    }
+
+    .svg-edge {
+      stroke: var(--border-color);
+      stroke-width: 1.5px;
+      fill: none;
+      transition: stroke 0.3s ease;
+    }
+
+    .svg-edge.active {
+      stroke: var(--accent-cyan);
+      stroke-width: 2px;
+    }
+
+    /* Info Alerts */
+    .info-alert {
+      background-color: rgba(0, 240, 255, 0.03);
+      border-left: 3px solid var(--accent-cyan);
+      padding: 1rem;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+
+    .info-alert code {
+      font-family: 'JetBrains Mono', monospace;
+      background-color: rgba(0, 240, 255, 0.1);
+      padding: 0.1rem 0.3rem;
+      border-radius: 3px;
+      color: var(--accent-cyan);
+    }
+
+    .info-alert p {
+      margin-bottom: 0.5rem;
+    }
+    .info-alert p:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="brand">
+        <span class="brand-tag">CS5303 – Design &amp; Analysis of Algorithms Lab</span>
+        <h1>MIN-MAX <span>DIVIDE &amp; CONQUER</span></h1>
+      </div>
+      <div class="meta-badge">
+        Institution: <strong>Chennai Institute of Technology</strong> | CSE Page 25
+      </div>
+    </div>
+    <div class="header-glow"></div>
+  </header>
+
+  <main>
+    <!-- Left Hand Column: Inputs, Controls & Preset Tester -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Workspace Configuration</span>
+      </div>
+      <div class="panel-body">
+        
+        <div class="form-group">
+          <label for="array-input">Dataset Elements (Comma Separated)</label>
+          <div class="input-wrapper">
+            <input type="text" id="array-input" value="3, 1, 7, 4, 9, 2, 8, 5, 6, 0" placeholder="e.g. 10, 42, 5, 18, 9">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Dataset Presets &amp; Generators</label>
+          <div class="presets-container">
+            <div class="preset-card" onclick="loadPreset([3, 1, 7, 4, 9, 2, 8, 5, 6, 0])">
+              <strong>Lab Sample</strong><br>[3, 1, 7, ..., 0]
+            </div>
+            <div class="preset-card" onclick="generateRandomArray(8)">
+              <strong>Random N=8</strong><br>Pow of 2
+            </div>
+            <div class="preset-card" onclick="generateRandomArray(15)">
+              <strong>Random N=15</strong><br>Odd Size
+            </div>
+            <div class="preset-card" onclick="generateRandomArray(30)">
+              <strong>Random N=30</strong><br>Large Array
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="runAnalysis()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Compute Algorithms
+          </button>
+          <button class="btn btn-secondary" onclick="runPerformanceBenchmark()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            Run Performance Benchmark
+          </button>
+        </div>
+
+        <div class="info-alert">
+          <p><strong>Divide &amp; Conquer Strategy:</strong> Splits the array in half dynamically, computes min/max on subdivisions recursively, then merges components using exactly 2 comparisons per combination stage.</p>
+          <p>Theoretical Optimal Comparisons: <code>T(n) = 3n/2 - 2</code> (when n is a power of 2).</p>
+        </div>
+
+        <!-- Render of Loaded Array -->
+        <div class="output-card">
+          <span class="badge-label">Active Input Array</span>
+          <div class="array-render" id="active-array-display">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Calculated Values Summary Card -->
+        <div class="stats-grid">
+          <div class="stat-box cyan">
+            <div class="stat-label">Minimum Element</div>
+            <div class="stat-value" id="res-min">-</div>
+          </div>
+          <div class="stat-box orange">
+            <div class="stat-label">Maximum Element</div>
+            <div class="stat-value" id="res-max">-</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Hand Column: Interactive Visualizations, Trace and Performance Benchmarks -->
+    <div class="panel">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('vis-tab', this)">Execution Visualizer</button>
+        <button class="tab-btn" onclick="switchTab('benchmark-tab', this)">Performance Matrix</button>
+        <button class="tab-btn" onclick="switchTab('code-tab', this)">Python Reference</button>
+      </div>
+
+      <!-- Execution Visualizer Tab -->
+      <div class="tab-content active" id="vis-tab">
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">D&amp;C Comparisons</div>
+            <div class="stat-value" id="dc-comps-stat" style="color: var(--accent-cyan);">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Naive Comparisons</div>
+            <div class="stat-value" id="naive-comps-stat" style="color: var(--accent-orange);">-</div>
+          </div>
+        </div>
+
+        <div class="tree-visualization-wrapper">
+          <span class="badge-label">Recursive Call Tree Visualizer</span>
+          <svg class="tree-container-svg" id="tree-svg">
+            <!-- Dynamically populated recursion tree graphics -->
+          </svg>
+        </div>
+
+        <div class="log-container" id="execution-log">
+          <div class="log-entry">Waiting for algorithm launch... Click "Compute Algorithms" to analyze.</div>
+        </div>
+      </div>
+
+      <!-- Performance Matrix Tab -->
+      <div class="tab-content" id="benchmark-tab">
+        <div class="info-alert">
+          This matrix benchmarks performance against randomized arrays across various scaling orders of magnitude, testing both algorithms and comparing results to the mathematical optimization limit formula: <code>3n/2 - 2</code>.
+        </div>
+        <div style="overflow-x: auto; background: rgba(10, 12, 16, 0.4); border: 1px solid var(--border-color); border-radius: 6px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Size (N)</th>
+                <th>D&amp;C Comps</th>
+                <th>Naive Comps</th>
+                <th>Formula (3n/2 - 2)</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-results-body">
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  Click "Run Performance Benchmark" to generate interactive dataset matrices
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Code Reference Tab -->
+      <div class="tab-content" id="code-tab">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">This is the exact high-efficiency DAA Lab implementation modeled in Python:</p>
+        <pre><code class="language-python"><span class="comment"># Divide and Conquer Min-Max Finder</span>
+<span class="keyword">def</span> <span class="def">min_max_dc</span>(arr, low, high):
+    <span class="keyword">global</span> comparison_count
+    <span class="comment"># Base case: single element</span>
+    <span class="keyword">if</span> low == high:
+        <span class="keyword">return</span> arr[low], arr[low]
+        
+    <span class="comment"># Base case: two elements</span>
+    <span class="keyword">if</span> high == low + <span class="number">1</span>:
+        comparison_count += <span class="number">1</span>
+        <span class="keyword">if</span> arr[low] &lt; arr[high]:
+            <span class="keyword">return</span> arr[low], arr[high]
+        <span class="keyword">return</span> arr[high], arr[low]
+        
+    <span class="comment"># Divide</span>
+    mid = (low + high) // <span class="number">2</span>
+    lmin, lmax = min_max_dc(arr, low, mid)
+    rmin, rmax = min_max_dc(arr, mid + <span class="number">1</span>, high)
+    
+    <span class="comment"># Conquer: combine with 2 comparisons</span>
+    comparison_count += <span class="number">1</span>
+    overall_min = lmin <span class="keyword">if</span> lmin &lt; rmin <span class="keyword">else</span> rmin
+    
+    comparison_count += <span class="number">1</span>
+    overall_max = lmax <span class="keyword">if</span> lmax &gt; rmax <span class="keyword">else</span> rmax
+    
+    <span class="keyword">return</span> overall_min, overall_max</code></pre>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Designed for CS5303 – Design &amp; Analysis of Algorithms Laboratory | <a href="https://www.citchennai.edu.in/" target="_blank" rel="noopener">Chennai Institute of Technology</a>
+  </footer>
+
+  <script>
+    // Global variable tracking comparison counters
+    let comparisonCount = 0;
+    let logBuffer = [];
+    let treeNodes = [];
+
+    // Initialize display with sample
+    window.addEventListener('DOMContentLoaded', () => {
+      const defaultArr = [3, 1, 7, 4, 9, 2, 8, 5, 6, 0];
+      loadPreset(defaultArr);
+      runAnalysis();
+    });
+
+    function loadPreset(arr) {
+      document.getElementById('array-input').value = arr.join(', ');
+      renderActiveArray(arr);
+    }
+
+    function generateRandomArray(size) {
+      const arr = [];
+      for (let i = 0; i < size; i++) {
+        arr.push(Math.floor(Math.random() * 99) + 1);
+      }
+      loadPreset(arr);
+      runAnalysis();
+    }
+
+    function renderActiveArray(arr, minVal = null, maxVal = null) {
+      const container = document.getElementById('active-array-display');
+      container.innerHTML = '';
+      arr.forEach(val => {
+        const elem = document.createElement('div');
+        elem.className = 'array-elem';
+        elem.textContent = val;
+        if (minVal !== null && val === minVal) {
+          elem.classList.add('min');
+          elem.innerHTML += '<span style="position: absolute; bottom:-12px; left:50%; transform:translateX(-50%); font-size:7px; color:var(--accent-green); font-family:\'Share Tech Mono\'; uppercase">MIN</span>';
+        } else if (maxVal !== null && val === maxVal) {
+          elem.classList.add('max');
+          elem.innerHTML += '<span style="position: absolute; bottom:-12px; left:50%; transform:translateX(-50%); font-size:7px; color:var(--accent-orange); font-family:\'Share Tech Mono\'; uppercase">MAX</span>';
+        }
+        container.appendChild(elem);
+      });
+    }
+
+    function switchTab(tabId, btnElement) {
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      btnElement.classList.add('active');
+    }
+
+    // Naive Implementation
+    function minMaxNaive(arr) {
+      if (arr.length === 0) return { min: null, max: null, comps: 0 };
+      let mn = arr[0];
+      let mx = arr[0];
+      let comps = 0;
+      for (let i = 1; i < arr.length; i++) {
+        comps += 1;
+        if (arr[i] < mn) {
+          mn = arr[i];
+        }
+        comps += 1;
+        if (arr[i] > mx) {
+          mx = arr[i];
+        }
+      }
+      return { min: mn, max: mx, comps: comps };
+    }
+
+    // Divide and Conquer wrapper
+    function runAnalysis() {
+      const inputStr = document.getElementById('array-input').value;
+      const arr = inputStr.split(',').map(s => parseInt(s.trim(), 10)).filter(num => !isNaN(num));
+
+      if (arr.length === 0) {
+        alert('Please enter a valid list of numbers.');
+        return;
+      }
+
+      // Prepare UI Logs & Displays
+      comparisonCount = 0;
+      logBuffer = [];
+      treeNodes = [];
+      
+      logBuffer.push(`<span class="log-entry step">Initializing Min-Max Divide & Conquer for Array: [${arr.join(', ')}]</span>`);
+      
+      // Compute D&C
+      const { min: dcMin, max: dcMax } = minMaxDc(arr, 0, arr.length - 1, null, 0);
+      const dcComps = comparisonCount;
+
+      // Compute Naive
+      const naiveRes = minMaxNaive(arr);
+
+      // Render Final Results
+      document.getElementById('res-min').textContent = dcMin;
+      document.getElementById('res-max').textContent = dcMax;
+      document.getElementById('dc-comps-stat').textContent = dcComps;
+      document.getElementById('naive-comps-stat').textContent = naiveRes.comps;
+
+      // Log finishing trace
+      logBuffer.push(`<span class="log-entry success">Execution Complete! Min found: ${dcMin}, Max found: ${dcMax}</span>`);
+      logBuffer.push(`<span class="log-entry success">Divide & Conquer Comparisons: ${dcComps} (Theoretical optimal: ${Math.floor(3 * arr.length / 2) - 2})</span>`);
+      logBuffer.push(`<span class="log-entry success">Naive Comparisons: ${naiveRes.comps}</span>`);
+      
+      // Update Log Container
+      const logEl = document.getElementById('execution-log');
+      logEl.innerHTML = logBuffer.join('');
+      logEl.scrollTop = logEl.scrollHeight;
+
+      // Render highlights on input array elements
+      renderActiveArray(arr, dcMin, dcMax);
+
+      // Render Tree Visualization SVG
+      renderRecursionTree(arr);
+    }
+
+    // Interactive Trace & D&C Function
+    function minMaxDc(arr, low, high, parentId = null, depth = 0) {
+      const id = 'node_' + low + '_' + high + '_' + Math.random().toString(36).substr(2, 5);
+      
+      const nodeInfo = {
+        id: id,
+        parentId: parentId,
+        low: low,
+        high: high,
+        rangeStr: `[${low}..${high}]`,
+        subArr: arr.slice(low, high + 1),
+        depth: depth,
+        min: null,
+        max: null
+      };
+      
+      treeNodes.push(nodeInfo);
+
+      // Base Case: 1 element
+      if (low === high) {
+        nodeInfo.min = arr[low];
+        nodeInfo.max = arr[low];
+        logBuffer.push(`<span class="log-entry step">Depth ${depth}: Base Case single element [${low}]: ${arr[low]}</span>`);
+        return { min: arr[low], max: arr[low] };
+      }
+
+      // Base Case: 2 elements
+      if (high === low + 1) {
+        comparisonCount += 1;
+        logBuffer.push(`<span class="log-entry compare">Depth ${depth}: Base Case pair comparing arr[${low}](${arr[low]}) &amp; arr[${high}](${arr[high]})</span>`);
+        if (arr[low] < arr[high]) {
+          nodeInfo.min = arr[low];
+          nodeInfo.max = arr[high];
+          return { min: arr[low], max: arr[high] };
+        } else {
+          nodeInfo.min = arr[high];
+          nodeInfo.max = arr[low];
+          return { min: arr[high], max: arr[low] };
+        }
+      }
+
+      // Divide Stage
+      const mid = Math.floor((low + high) / 2);
+      logBuffer.push(`<span class="log-entry step">Depth ${depth}: Dividing range [${low}..${high}] at mid index ${mid}</span>`);
+      
+      const leftRes = minMaxDc(arr, low, mid, id, depth + 1);
+      const rightRes = minMaxDc(arr, mid + 1, high, id, depth + 1);
+
+      // Conquer / Combine Stage
+      comparisonCount += 1;
+      const overallMin = leftRes.min < rightRes.min ? leftRes.min : rightRes.min;
+      logBuffer.push(`<span class="log-entry compare">Depth ${depth}: Compare left min (${leftRes.min}) with right min (${rightRes.min}) -> Min: ${overallMin}</span>`);
+
+      comparisonCount += 1;
+      const overallMax = leftRes.max > rightRes.max ? leftRes.max : rightRes.max;
+      logBuffer.push(`<span class="log-entry compare">Depth ${depth}: Compare left max (${leftRes.max}) with right max (${rightRes.max}) -> Max: ${overallMax}</span>`);
+
+      nodeInfo.min = overallMin;
+      nodeInfo.max = overallMax;
+      
+      return { min: overallMin, max: overallMax };
+    }
+
+    // Dynamic Tree Visualization Builder (SVG graphics generation)
+    function renderRecursionTree(arr) {
+      const svg = document.getElementById('tree-svg');
+      svg.innerHTML = ''; // clear
+
+      // Group nodes by depth
+      const depthGroups = {};
+      treeNodes.forEach(node => {
+        if (!depthGroups[node.depth]) depthGroups[node.depth] = [];
+        depthGroups[node.depth].push(node);
+      });
+
+      const maxDepth = Math.max(...Object.keys(depthGroups).map(Number));
+      const width = svg.clientWidth || 600;
+      const height = svg.clientHeight || 340;
+      
+      // Calculate coordinates for nodes
+      const nodeCoords = {};
+
+      Object.keys(depthGroups).forEach(dStr => {
+        const depth = parseInt(dStr, 10);
+        const nodesAtDepth = depthGroups[depth];
+        const count = nodesAtDepth.length;
+        
+        const y = 35 + (depth * (height - 60) / (maxDepth || 1));
+        
+        nodesAtDepth.forEach((node, idx) => {
+          // Horizontal positioning
+          const x = (idx + 0.5) * (width / count);
+          nodeCoords[node.id] = { x, y, node };
+        });
+      });
+
+      // Render connectors/edges first so they sit behind nodes
+      Object.keys(nodeCoords).forEach(id => {
+        const curr = nodeCoords[id];
+        if (curr.node.parentId && nodeCoords[curr.node.parentId]) {
+          const parent = nodeCoords[curr.node.parentId];
+          
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', parent.x);
+          line.setAttribute('y1', parent.y);
+          line.setAttribute('x2', curr.x);
+          line.setAttribute('y2', curr.y);
+          line.setAttribute('class', 'svg-edge');
+          svg.appendChild(line);
+        }
+      });
+
+      // Render nodes circles + tags
+      Object.keys(nodeCoords).forEach(id => {
+        const { x, y, node } = nodeCoords[id];
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+        // Outer Glow/Accent Circle
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '18');
+        circle.setAttribute('class', 'svg-node-circle computed');
+        group.appendChild(circle);
+
+        // Core text: range indices
+        const textRange = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textRange.setAttribute('x', x);
+        textRange.setAttribute('y', y - 4);
+        textRange.setAttribute('class', 'svg-text');
+        textRange.textContent = `${node.low}:${node.high}`;
+        group.appendChild(textRange);
+
+        // Subtext: computed min/max
+        const textResult = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textResult.setAttribute('x', x);
+        textResult.setAttribute('y', y + 8);
+        textResult.setAttribute('class', 'svg-text-label');
+        textResult.textContent = `L:${node.min} H:${node.max}`;
+        group.appendChild(textResult);
+
+        // Add interactive tooltips or logs on click
+        group.style.cursor = 'pointer';
+        group.addEventListener('click', () => {
+          alert(`Sub-problem: Array elements [${node.subArr.join(', ')}]\nIndices: ${node.low} to ${node.high}\nLocal Min: ${node.min}\nLocal Max: ${node.max}`);
+        });
+
+        svg.appendChild(group);
+      });
+    }
+
+    // Dynamic Benchmarking Performance Analysis
+    function runPerformanceBenchmark() {
+      const sizes = [10, 100, 1000, 5000, 10000];
+      const tbody = document.getElementById('benchmark-results-body');
+      tbody.innerHTML = ''; // clear loading state
+
+      sizes.forEach(size => {
+        // Build Random Dataset
+        const arr = Array.from({ length: size }, () => Math.floor(Math.random() * 10000) + 1);
+        
+        // Count D&C comparisons
+        comparisonCount = 0;
+        minMaxDc(arr, 0, arr.length - 1, null, 0);
+        const dcCount = comparisonCount;
+
+        // Count Naive comparisons
+        const naiveRes = minMaxNaive(arr);
+        
+        // Calculate theoretical formula
+        const formulaVal = Math.floor(3 * size / 2) - 2;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="color: var(--accent-cyan); font-weight: bold;">${size}</td>
+          <td>${dcCount}</td>
+          <td style="color: var(--text-muted);">${naiveRes.comps}</td>
+          <td style="color: var(--accent-orange); font-weight: bold;">${formulaVal}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>
