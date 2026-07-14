@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dijkstra's Algorithm</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 700px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 120px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 10px 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #edges {
+            margin-top: 15px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>Dijkstra's Algorithm</h1>
+
+<label>Number of Vertices:</label>
+<input type="number" id="vertices">
+
+<br>
+
+<label>Number of Edges:</label>
+<input type="number" id="edgeCount">
+
+<br>
+
+<button onclick="createEdges()">Create Edges</button>
+
+<div id="edges"></div>
+
+<br>
+
+<label>Source Vertex:</label>
+<input type="number" id="source">
+
+<br>
+
+<button onclick="runDijkstra()">Find Shortest Path</button>
+
+<div id="result"></div>
+
+</div>
+
+
+<script>
+
+function createEdges(){
+
+    let count = document.getElementById("edgeCount").value;
+
+    let html = "<h3>Enter Edges (Source Destination Weight)</h3>";
+
+    for(let i=0;i<count;i++){
+
+        html += `
+        <div>
+        Edge ${i+1} :
+        <input type="number" id="u${i}" placeholder="Source">
+        <input type="number" id="v${i}" placeholder="Destination">
+        <input type="number" id="w${i}" placeholder="Weight">
+        </div>
+        `;
+    }
+
+    document.getElementById("edges").innerHTML = html;
+}
+
+
+
+function dijkstra(graph,source,n){
+
+    let dist = Array(n).fill(Infinity);
+    let prev = Array(n).fill(null);
+    let visited = Array(n).fill(false);
+
+
+    dist[source]=0;
+
+
+    for(let i=0;i<n;i++){
+
+        let u=-1;
+
+
+        for(let j=0;j<n;j++){
+
+            if(!visited[j] && 
+              (u==-1 || dist[j]<dist[u])){
+
+                u=j;
+            }
+        }
+
+
+        if(u==-1)
+            break;
+
+
+        visited[u]=true;
+
+
+        for(let edge of graph[u]){
+
+            let v=edge.node;
+            let w=edge.weight;
+
+
+            if(dist[u]+w < dist[v]){
+
+                dist[v]=dist[u]+w;
+                prev[v]=u;
+
+            }
+        }
+    }
+
+
+    return {dist,prev};
+
+}
+
+
+
+function getPath(prev,target){
+
+    let path=[];
+
+
+    while(target!==null){
+
+        path.push(target);
+        target=prev[target];
+
+    }
+
+
+    return path.reverse();
+
+}
+
+
+
+function runDijkstra(){
+
+
+    let n=parseInt(document.getElementById("vertices").value);
+
+    let e=parseInt(document.getElementById("edgeCount").value);
+
+    let source=parseInt(document.getElementById("source").value);
+
+
+
+    let graph=[];
+
+
+    for(let i=0;i<n;i++)
+        graph.push([]);
+
+
+
+    for(let i=0;i<e;i++){
+
+        let u=parseInt(document.getElementById("u"+i).value);
+
+        let v=parseInt(document.getElementById("v"+i).value);
+
+        let w=parseInt(document.getElementById("w"+i).value);
+
+
+
+        graph[u].push({
+            node:v,
+            weight:w
+        });
+
+    }
+
+
+
+    let answer=dijkstra(graph,source,n);
+
+
+
+    let output="<h2>Shortest Paths</h2>";
+
+    output+="<table>";
+
+    output+="<tr><th>Vertex</th><th>Distance</th><th>Path</th></tr>";
+
+
+
+    for(let i=0;i<n;i++){
+
+
+        let distance=
+        answer.dist[i]===Infinity?
+        "INF":
+        answer.dist[i];
+
+
+        let path=
+        answer.dist[i]===Infinity?
+        "No Path":
+        getPath(answer.prev,i).join(" → ");
+
+
+
+        output+=`
+        <tr>
+        <td>${i}</td>
+        <td>${distance}</td>
+        <td>${path}</td>
+        </tr>
+        `;
+
+    }
+
+
+    output+="</table>";
+
+
+    document.getElementById("result").innerHTML=output;
+
+}
+
+
+</script>
+
+
+</body>
+</html>
